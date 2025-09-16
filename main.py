@@ -8,7 +8,7 @@ def sort_users(users_list):
     """
     Organiza a lista de usuários com base nas regras de ordenação:
     1. Nome com 👎.
-    2. Nomes com letras/palavras (ordenados por contagem de palavras decrescente).
+    2. Nomes com letras/palavras, priorizando a palavra final (Z-A).
     3. Emojis na ordem inversa.
     4. Nomes "Teste" por último.
     5. Como desempate, ordena a URL por ordem alfabética de Z até A.
@@ -34,7 +34,7 @@ def sort_users(users_list):
         # Regra 3: Nomes com palavras
         is_word_name1 = bool(re.search(r'[a-zA-ZáàâãéèêíïóôõöúüçÇÁÀÂÃÉÈÊÍÏÓÕÖÚÜ]', name1))
         is_word_name2 = bool(re.search(r'[a-zA-ZáàâãéèêíïóôõöúüçÇÁÀÂÃÉÈÊÍÏÓÕÖÚÜ]', name2))
-        
+
         if is_word_name1 and not is_word_name2:
             return -1
         if not is_word_name1 and is_word_name2:
@@ -42,16 +42,20 @@ def sort_users(users_list):
 
         # Comparação entre nomes com palavras
         if is_word_name1 and is_word_name2:
-            word_count1 = len(re.findall(r'\b\w+\b', name1))
-            word_count2 = len(re.findall(r'\b\w+\b', name2))
-            
-            if word_count1 != word_count2:
-                return word_count2 - word_count1  # Decrescente
-            
+            # Extrai a palavra no final do nome para ordenação (Z-A)
+            word_match1 = re.search(r'\b(\w+)\b$', name1)
+            word1 = word_match1.group(1) if word_match1 else ""
+            word_match2 = re.search(r'\b(\w+)\b$', name2)
+            word2 = word_match2.group(1) if word_match2 else ""
+
+            if word1 != word2:
+                # Prioriza a ordenação da palavra final (Z-A)
+                return -1 if word1 > word2 else 1
+
+            # Se as palavras forem iguais, ordena o nome inteiro (Z-A)
             if name1 != name2:
-                # Ordena nome (Z-A)
                 return -1 if name1 > name2 else 1
-            
+
             # Se tudo for igual, ordena a URL (Z-A)
             return -1 if url1 > url2 else 1
 
@@ -66,10 +70,8 @@ def sort_users(users_list):
             return priority1 - priority2
 
         if name1 != name2:
-            # Ordena nome (Z-A)
             return -1 if name1 > name2 else 1
-        
-        # Se tudo for igual, ordena a URL (Z-A)
+
         return -1 if url1 > url2 else 1
 
     return sorted(users_list, key=cmp_to_key(compare_users))
