@@ -12,12 +12,12 @@ def sort_users(users_list):
     """
     def sort_key(user):
         name = user.get('name', '')
-
+        
         # Ponto 1: Se o nome for exatamente "Teste", coloca-o no final, garantido.
         if name == 'Teste':
             # Usa uma tupla com um valor muito alto para garantir que seja o último.
             return (9999, name)
-
+            
         # Ponto 2: Prioriza nomes que contêm o emoji 👎
         if '👎' in name:
             return (0, name) # Primeira prioridade
@@ -54,15 +54,16 @@ if uploaded_file is not None:
             # Organiza a lista de usuários
             original_users = data["multi_users"]
             organized_users = sort_users(original_users)
-
+            
             # Atualiza o dicionário com a nova lista organizada
             data["multi_users"] = organized_users
 
             # Converte o dicionário de volta para JSON formatado
             organized_content = json.dumps(data, indent=2)
 
-            st.subheader("Conteúdo Organizado:")
-            st.json(data)
+            # Exibe o JSON recolhido por padrão
+            with st.expander("Clique para ver o conteúdo organizado"):
+                st.json(data)
 
             st.download_button(
                 label="Clique para Baixar o Arquivo Organizado",
@@ -72,7 +73,7 @@ if uploaded_file is not None:
             )
 
             st.info("Seu novo arquivo `.dev` foi gerado e está pronto para ser baixado. Você pode usá-lo para substituir o arquivo de backup original.")
-
+        
         else:
             st.error("O arquivo `.dev` não contém a chave 'multi_users'. Por favor, verifique se o arquivo está no formato correto.")
 
