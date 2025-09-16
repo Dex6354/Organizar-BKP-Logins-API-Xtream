@@ -2,49 +2,78 @@ import streamlit as st
 import json
 import re
 import os
+from functools import cmp_to_key
 
 def sort_users(users_list):
     """
     Organiza a lista de usuários com base nas regras de ordenação:
     1. Nome com 👎.
-    2. Nomes com letras/palavras.
+    2. Nomes com letras/palavras (ordenados por contagem de palavras decrescente).
     3. Emojis na ordem inversa.
-    4. Nomes "Teste" por último, garantido.
-    5. Nomes que contêm palavras, ordenados pelo número de palavras (decrescente),
-       depois pelo nome (Z-A) e por fim pela URL (Z-A).
-    6. Se a prioridade for igual, ordena a URL por ordem alfabética de Z até A.
+    4. Nomes "Teste" por último.
+    5. Como desempate, ordena a URL por ordem alfabética de Z até A.
     """
-    def sort_key(user):
-        name = user.get('name', '')
-        url = user.get('url', '')
+    def compare_users(user1, user2):
+        name1 = user1.get('name', '')
+        url1 = user1.get('url', '')
+        name2 = user2.get('name', '')
+        url2 = user2.get('url', '')
 
-        # Regra 1: Se o nome for exatamente "Teste", coloca-o no final.
-        if name == 'Teste':
-            return (9999, '')
+        # Regra 1: "Teste" sempre por último
+        if name1 == 'Teste' and name2 != 'Teste':
+            return 1
+        if name1 != 'Teste' and name2 == 'Teste':
+            return -1
 
-        # Regra 2: Prioriza nomes que contêm o emoji 👎
-        if '👎' in name:
-            # Prioridade 0, depois por nome e URL (Z-A)
-            return (0, name, url[::-1])
+        # Regra 2: 👎 primeiro
+        if '👎' in name1 and '👎' not in name2:
+            return -1
+        if '👎' not in name1 and '👎' in name2:
+            return 1
 
-        # Regra 3: Prioriza nomes que contêm letras ou palavras
-        is_word_name = bool(re.search(r'[a-zA-ZáàâãéèêíïóôõöúüçÇÁÀÂÃÉÈÊÍÏÓÕÖÚÜ]', name))
-        if is_word_name:
-            # Conta palavras de forma robusta
-            word_count = len(re.findall(r'\b\w+\b', name))
-            # Prioridade 1, depois por contagem de palavras (desc),
-            # nome (Z-A) e URL (Z-A)
-            return (1, -word_count, name[::-1], url[::-1])
+        # Regra 3: Nomes com palavras
+        is_word_name1 = bool(re.search(r'[a-zA-ZáàâãéèêíïóôõöúüçÇÁÀÂÃÉÈÊÍÏÓÕÖÚÜ]', name1))
+        is_word_name2 = bool(re.search(r'[a-zA-ZáàâãéèêíïóôõöúüçÇÁÀÂÃÉÈÊÍÏÓÕÖÚÜ]', name2))
+        
+        if is_word_name1 and not is_word_name2:
+            return -1
+        if not is_word_name1 and is_word_name2:
+            return 1
 
-        # Regra 4: Define a ordem de prioridade para os emojis puros
+        # Comparação entre nomes com palavras
+        if is_word_name1 and is_word_name2:
+            word_count1 = len(re.findall(r'\b\w+\b', name1))
+            word_count2 = len(re.findall(r'\b\w+\b', name2))
+            
+            if word_count1 != word_count2:
+                return word_count2 - word_count1  # Decrescente
+            
+            if name1 != name2:
+                # Ordena nome (Z-A)
+                return -1 if name1 > name2 else 1
+            
+            # Se tudo for igual, ordena a URL (Z-A)
+            return -1 if url1 > url2 else 1
+
+        # Regra 4: Nomes puros de emoji
         order = ['🔥', '💧', '🟢', '🔞', '📺', '❌']
         priority = {emoji: i for i, emoji in enumerate(order[::-1])}
 
-        # Prioridade baseada na lista de emojis, depois por nome (Z-A)
-        # e URL (Z-A)
-        return (priority.get(name[0], len(order) + 2), name[::-1], url[::-1])
+        priority1 = priority.get(name1[0], len(order) + 2)
+        priority2 = priority.get(name2[0], len(order) + 2)
 
-    return sorted(users_list, key=sort_key)
+        if priority1 != priority2:
+            return priority1 - priority2
+
+        if name1 != name2:
+            # Ordena nome (Z-A)
+            return -1 if name1 > name2 else 1
+        
+        # Se tudo for igual, ordena a URL (Z-A)
+        return -1 if url1 > url2 else 1
+
+    return sorted(users_list, key=cmp_to_key(compare_users))
+
 
 st.set_page_config(page_title="Organizador de Logins", layout="centered")
 st.title("Organizador de Logins .dev")
