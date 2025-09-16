@@ -13,6 +13,18 @@ def sort_users(users_list):
     4. Nomes "Teste" por último.
     5. Como desempate, ordena a URL por ordem alfabética de Z até A.
     """
+    def get_emoji_sort_key(name):
+        # Define a ordem de prioridade dos emojis (da mais alta para a mais baixa)
+        priority_order = ['❌', '📺', '🔞', '🟢', '💧', '🔥']
+        
+        # Cria a chave de ordenação com base na prioridade de cada emoji na sequência
+        sort_key = []
+        for emoji in name:
+            if emoji in priority_order:
+                sort_key.append(priority_order.index(emoji))
+        
+        return tuple(sort_key)
+
     def compare_users(user1, user2):
         name1 = user1.get('name', '')
         url1 = user1.get('url', '')
@@ -34,7 +46,7 @@ def sort_users(users_list):
         # Regra 3: Nomes com palavras
         is_word_name1 = bool(re.search(r'[a-zA-ZáàâãéèêíïóôõöúüçÇÁÀÂÃÉÈÊÍÏÓÕÖÚÜ]', name1))
         is_word_name2 = bool(re.search(r'[a-zA-ZáàâãéèêíïóôõöúüçÇÁÀÂÃÉÈÊÍÏÓÕÖÚÜ]', name2))
-
+        
         if is_word_name1 and not is_word_name2:
             return -1
         if not is_word_name1 and is_word_name2:
@@ -42,36 +54,26 @@ def sort_users(users_list):
 
         # Comparação entre nomes com palavras
         if is_word_name1 and is_word_name2:
-            # Extrai a palavra no final do nome para ordenação (Z-A)
             word_match1 = re.search(r'\b(\w+)\b$', name1)
             word1 = word_match1.group(1) if word_match1 else ""
             word_match2 = re.search(r'\b(\w+)\b$', name2)
             word2 = word_match2.group(1) if word_match2 else ""
-
+            
             if word1 != word2:
-                # Prioriza a ordenação da palavra final (Z-A)
                 return -1 if word1 > word2 else 1
-
-            # Se as palavras forem iguais, ordena o nome inteiro (Z-A)
+            
             if name1 != name2:
                 return -1 if name1 > name2 else 1
-
-            # Se tudo for igual, ordena a URL (Z-A)
+            
             return -1 if url1 > url2 else 1
 
         # Regra 4: Nomes puros de emoji
-        order = ['🔥', '💧', '🟢', '🔞', '📺', '❌']
-        priority = {emoji: i for i, emoji in enumerate(order[::-1])}
-
-        priority1 = priority.get(name1[0], len(order) + 2)
-        priority2 = priority.get(name2[0], len(order) + 2)
-
-        if priority1 != priority2:
-            return priority1 - priority2
-
-        if name1 != name2:
-            return -1 if name1 > name2 else 1
-
+        key1 = get_emoji_sort_key(name1)
+        key2 = get_emoji_sort_key(name2)
+        
+        if key1 != key2:
+            return 1 if key1 > key2 else -1
+        
         return -1 if url1 > url2 else 1
 
     return sorted(users_list, key=cmp_to_key(compare_users))
