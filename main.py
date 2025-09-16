@@ -59,8 +59,8 @@ if uploaded_file is not None:
             # Cria um novo dicionário com apenas a lista organizada
             new_data = {"multi_users": organized_users}
 
-            # Converte o novo dicionário para JSON formatado
-            organized_content = json.dumps(new_data, indent=2)
+            # Converte o novo dicionário para JSON formatado e garante que os emojis não sejam escapados
+            organized_content = json.dumps(new_data, indent=2, ensure_ascii=False)
 
             # Define o nome do arquivo de download
             original_file_name, file_extension = os.path.splitext(uploaded_file.name)
