@@ -59,12 +59,18 @@ def sort_users(users_list):
             word_match2 = re.search(r'\b(\w+)\b$', name2)
             word2 = word_match2.group(1) if word_match2 else ""
             
+            # Prioridade 1: Ordenar pela palavra no final do nome (Z-A)
             if word1 != word2:
                 return -1 if word1 > word2 else 1
             
-            if name1 != name2:
-                return -1 if name1 > name2 else 1
+            # Prioridade 2: Ordenar pela sequência de emojis (prioridade definida)
+            key1 = get_emoji_sort_key(name1)
+            key2 = get_emoji_sort_key(name2)
             
+            if key1 != key2:
+                return 1 if key1 > key2 else -1
+            
+            # Prioridade 3: URL como desempate (Z-A)
             return -1 if url1 > url2 else 1
 
         # Regra 4: Nomes puros de emoji
