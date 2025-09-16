@@ -56,11 +56,11 @@ if uploaded_file is not None:
             original_users = data["multi_users"]
             organized_users = sort_users(original_users)
 
-            # Atualiza o dicionário com a nova lista organizada
-            data["multi_users"] = organized_users
+            # Cria um novo dicionário com apenas a lista organizada
+            new_data = {"multi_users": organized_users}
 
-            # Converte o dicionário de volta para JSON formatado
-            organized_content = json.dumps(data, indent=2)
+            # Converte o novo dicionário para JSON formatado
+            organized_content = json.dumps(new_data, indent=2)
 
             # Define o nome do arquivo de download
             original_file_name, file_extension = os.path.splitext(uploaded_file.name)
@@ -68,7 +68,7 @@ if uploaded_file is not None:
 
             # Exibe o JSON recolhido por padrão
             with st.expander("Clique para ver o conteúdo organizado"):
-                st.json(data)
+                st.json(new_data)
 
             st.download_button(
                 label="Clique para Baixar o Arquivo Organizado",
